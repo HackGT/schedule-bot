@@ -3,6 +3,8 @@ const { WebClient } = require('@slack/web-api');
 const { createEventAdapter } = require('@slack/events-api');
 const { createMessageAdapter } = require('@slack/interactive-messages');
 const fetch = require('node-fetch');
+const dateformat = require('dateformat');
+
 
 const express = require('express');
 const app = express();
@@ -58,26 +60,10 @@ slackInteractions.action({ within: 'block_actions' }, (payload) => {
     console.log("Default block action called")
 })
 
-slackInteractions.options({ actionId: 'event_select' }, async (payload) => {
+slackInteractions.options({ actionId: 'event_select' }, (payload) => {
     console.log('Getting events');
 
-    const data = await getEventData();
-    console.log("Returning");
-
-    console.log(data);
-    // return {
-    //     "options": [
-    //         {
-    //             "text": {
-    //                 "type": "plain_text",
-    //                 "text": "*this is plain_text text*"
-    //             },
-    //             "value": "value-0"
-    //         },
-    //     ]
-    // }
-
-    return data;
+    return getEventData(payload.value);
 });
 
 const getEventsQuery = `
@@ -94,7 +80,7 @@ const getEventsQuery = `
 	}
 `;
 
-async function getEventData() {
+async function getEventData(query) {
     const res = await fetch("https://cms.hack.gt/graphql", {
         method: "POST",
         headers: {
@@ -113,24 +99,48 @@ async function getEventData() {
     let data = await res.json();
     data = data.data.eventbases;
 
+    data = data.filter((event) => {
+        return event.title.toLowerCase().replace(/\s/g, '').includes(query.toLowerCase().replace(/\s/g, ''));
+    });
+
+    for (i = 0; i < data.length; i++) {
+        data[i].date = new Date(data[i].start_time);
+    }
+
+    data = data.sort((a, b) => a.date - b.date);
+
     let options = {
-        "options": []
+        "option_groups": []
     };
+
+    let dates = [];
 
     for (event of data) {
         let strippedName = event.title.trim().replace(/[^A-Z0-9]+/ig, "_").trunc(40);
-        let date = new Date(event.start_time)
-        let dateString = date.getUTCHours().toString().padStart(2, '0') + ":" + date.getMinutes().toString().padStart(2, '0');
+        let timeString = dateformat(event.date, 'UTC:hh:MM TT');
+        let dateString = dateformat(event.date, 'UTC:ddd, mmm dd, yyyy');
+
+        if (!(dates.includes(dateString))) {
+            options.option_groups.push({
+                label: {
+                    type: "plain_text",
+                    text: dateString
+                },
+                options: []
+            })
+
+            dates.push(dateString);
+        }
 
         let object = {
             text: {
                 type: "plain_text",
-                text: (dateString + " " + event.title).trunc(40)
+                text: (timeString + " " + event.title).trunc(40)
             },
             value: strippedName
         }
 
-        options.options.push(object);
+        options.option_groups[options.option_groups.length - 1].options.push(object);
     }
 
     return options;
