@@ -2,6 +2,7 @@ require('dotenv').config();
 const { WebClient } = require('@slack/web-api');
 const { createEventAdapter } = require('@slack/events-api');
 const { createMessageAdapter } = require('@slack/interactive-messages');
+const fetch = require('node-fetch');
 
 const express = require('express');
 const app = express();
@@ -11,6 +12,12 @@ const slackEvents = createEventAdapter(process.env.SLACK_SIGNING_SECRET);
 const slackInteractions = createMessageAdapter(process.env.SLACK_SIGNING_SECRET);
 
 const currentTime = new Date().toTimeString();
+
+// Slack will not display options data if text or value is greater than 75 characters so it must be shortened
+String.prototype.trunc = String.prototype.trunc ||
+    function (n) {
+        return (this.length > n) ? this.substr(0, n - 1) + '&hellip;' : this;
+    };
 
 app.use('/slack/events', slackEvents.requestListener())
 
@@ -35,41 +42,99 @@ slackInteractions.viewSubmission('schedule_modal_callback_id', (payload) => {
     console.log('View submitted');
 })
 
-slackInteractions.action({ type: 'static_select' }, (payload, respond) => {
-    console.log('static select');
-    //console.log('payload', payload);
-});
+slackInteractions.action({ actionId: 'event_select' }, (payload) => {
+    console.log('Event selected; Updating modal');
 
-slackInteractions.action({ actionId: 'button-identifier', type: 'button' }, (payload) => {
-    console.log('button');
+    updateModal(payload.view.id, payload.actions[0].selected_option);
 })
 
-slackInteractions.action({ type: 'external_select' }, (payload) => {
-    console.log('external select');
-})
+slackInteractions.action({ actionId: 'open_schedule_modal' }, (payload) => {
+    console.log('Opening modal')
 
-slackInteractions.action({ within: 'block_actions' }, (payload) => {
-    console.log(payload);
-    console.log("Block action called")
     openModal(payload.trigger_id);
 })
 
-// Example of handling options request within block elements
-slackInteractions.options({ within: 'block_actions' }, (payload) => {
-    // Return a list of options to be shown to the user
-    console.log('block actions yuh');
-    return {
-        options: [
-            {
-                text: {
-                    type: 'plain_text',
-                    text: 'A good choice',
-                },
-                value: 'good_choice',
-            },
-        ],
-    };
+slackInteractions.action({ within: 'block_actions' }, (payload) => {
+    console.log("Default block action called")
+})
+
+slackInteractions.options({ actionId: 'event_select' }, async (payload) => {
+    console.log('Getting events');
+
+    const data = await getEventData();
+    console.log("Returning");
+
+    console.log(data);
+    // return {
+    //     "options": [
+    //         {
+    //             "text": {
+    //                 "type": "plain_text",
+    //                 "text": "*this is plain_text text*"
+    //             },
+    //             "value": "value-0"
+    //         },
+    //     ]
+    // }
+
+    return data;
 });
+
+const getEventsQuery = `
+	eventbases(start: 0) {
+		title
+		points
+		start_time
+		end_time
+		checkin_slug
+		area {
+			name
+		}
+		type
+	}
+`;
+
+async function getEventData() {
+    const res = await fetch("https://cms.hack.gt/graphql", {
+        method: "POST",
+        headers: {
+            "Content-Type": `application/json`,
+            Accept: `application/json`
+        },
+        body: JSON.stringify({
+            query: `query {
+				${getEventsQuery}
+			}`
+        })
+    })
+
+    console.log("Fetched event data");
+
+    let data = await res.json();
+    data = data.data.eventbases;
+
+    let options = {
+        "options": []
+    };
+
+    for (event of data) {
+        let strippedName = event.title.trim().replace(/[^A-Z0-9]+/ig, "_").trunc(40);
+        let date = new Date(event.start_time)
+        let dateString = date.getUTCHours().toString().padStart(2, '0') + ":" + date.getMinutes().toString().padStart(2, '0');
+
+        let object = {
+            text: {
+                type: "plain_text",
+                text: (dateString + " " + event.title).trunc(40)
+            },
+            value: strippedName
+        }
+
+        options.options.push(object);
+    }
+
+    return options;
+}
 
 async function openModal(trigger_id) {
     const res = await web.views.open({
@@ -105,7 +170,7 @@ async function openModal(trigger_id) {
                     "elements": [
                         {
                             "type": "external_select",
-                            "action_id": 'get_events',
+                            "action_id": 'event_select',
                             "placeholder": {
                                 "type": "plain_text",
                                 "text": "Select event",
@@ -119,8 +184,64 @@ async function openModal(trigger_id) {
             ]
         }
     })
+}
 
-    console.log(res);
+async function updateModal(modal_id, selected_event) {
+    console.log(selected_event);
+    const res = await web.views.update({
+        "view_id": modal_id,
+        "view": {
+            "type": "modal",
+            "callback_id": "schedule_modal_callback_id",
+            'notify_on_close': true,
+            "title": {
+                "type": "plain_text",
+                "text": "Update Schedule"
+            },
+            "submit": {
+                "type": "plain_text",
+                "text": "Submit",
+                "emoji": true
+            },
+            "close": {
+                "type": "plain_text",
+                "text": "Cancel",
+                "emoji": true
+            },
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "*Choose an event to update*"
+                    }
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "external_select",
+                            "action_id": 'event_select',
+                            "placeholder": {
+                                "type": "plain_text",
+                                "text": "Select event",
+                                "emoji": true
+                            },
+                            "min_query_length": 0,
+                            "initial_option": selected_event
+                        }
+                    ],
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "*Choose an updated date and time*"
+                    }
+                },
+            ]
+        }
+    })
 }
 
 
@@ -192,25 +313,9 @@ async function setHome() {
                                 "emoji": true
                             },
                             "style": "primary",
-                            "value": "create_task"
+                            "action_id": "open_schedule_modal"
                         }
                     ]
-                },
-                {
-                    "type": "section",
-                    "block_id": "section678233",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "Pick an item from the dropdown list"
-                    },
-                    "accessory": {
-                        "action_id": "text123423",
-                        "type": "external_select",
-                        "placeholder": {
-                            "type": "plain_text",
-                            "text": "Select an item"
-                        }
-                    }
                 },
             ]
         }
