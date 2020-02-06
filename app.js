@@ -18,7 +18,7 @@ const currentTime = new Date().toTimeString();
 // Slack will not display options data if text or value is greater than 75 characters so it must be shortened
 String.prototype.trunc = String.prototype.trunc ||
     function (n) {
-        return (this.length > n) ? this.substr(0, n - 1) + '&hellip;' : this;
+        return (this.length > n) ? this.substr(0, n - 1) + '...' : this;
     };
 
 app.use('/slack/events', slackEvents.requestListener())
@@ -29,7 +29,7 @@ slackEvents.on('message', (event) => {
 
 slackEvents.on('app_home_opened', (event) => {
     console.log("Setting home");
-    setHome();
+    setHome(event.user);
 })
 
 slackEvents.on('error', console.error);
@@ -66,19 +66,18 @@ slackInteractions.options({ actionId: 'event_select' }, (payload) => {
     return getEventData(payload.value);
 });
 
-const getEventsQuery = `
-	eventbases(start: 0) {
-		title
-		points
-		start_time
-		end_time
-		checkin_slug
-		area {
-			name
-		}
-		type
-	}
-`;
+async function getEventData(id) {
+    const res = await fetch("https://cms.hack.gt/graphql", {
+        method: "POST",
+        headers: {
+            "Content-Type": `application/json`,
+            Accept: `application/json`
+        },
+        body: JSON.stringify({
+            query: eventDataQuery()
+        })
+    })
+}
 
 async function getEventData(query) {
     const res = await fetch("https://cms.hack.gt/graphql", {
@@ -88,9 +87,7 @@ async function getEventData(query) {
             Accept: `application/json`
         },
         body: JSON.stringify({
-            query: `query {
-				${getEventsQuery}
-			}`
+            query: eventsQuery()
         })
     })
 
@@ -99,6 +96,9 @@ async function getEventData(query) {
     let data = await res.json();
     data = data.data.eventbases;
 
+    console.log(data);
+
+    // Filters events based on what the user types in the dropdown box
     data = data.filter((event) => {
         return event.title.toLowerCase().replace(/\s/g, '').includes(query.toLowerCase().replace(/\s/g, ''));
     });
@@ -116,7 +116,7 @@ async function getEventData(query) {
     let dates = [];
 
     for (event of data) {
-        let strippedName = event.title.trim().replace(/[^A-Z0-9]+/ig, "_").trunc(40);
+        let identifier = (event.title + event.area.name).trim().replace(/[^A-Z0-9]+/ig, "_").trunc(60);
         let timeString = dateformat(event.date, 'UTC:hh:MM TT');
         let dateString = dateformat(event.date, 'UTC:ddd, mmm dd, yyyy');
 
@@ -135,9 +135,9 @@ async function getEventData(query) {
         let object = {
             text: {
                 type: "plain_text",
-                text: (timeString + " " + event.title).trunc(40)
+                text: (timeString + " " + event.title).trunc(60)
             },
-            value: strippedName
+            value: identifier
         }
 
         options.option_groups[options.option_groups.length - 1].options.push(object);
@@ -197,7 +197,6 @@ async function openModal(trigger_id) {
 }
 
 async function updateModal(modal_id, selected_event) {
-    console.log(selected_event);
     const res = await web.views.update({
         "view_id": modal_id,
         "view": {
@@ -243,10 +242,14 @@ async function updateModal(modal_id, selected_event) {
                     ],
                 },
                 {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "*Choose an updated date and time*"
+                    "type": "input",
+                    "element": {
+                        "type": "plain_text_input"
+                    },
+                    "label": {
+                        "type": "plain_text",
+                        "text": "Title",
+                        "emoji": true
                     }
                 },
             ]
@@ -296,9 +299,9 @@ async function getUsers() {
     console.log(res);
 }
 
-async function setHome() {
+async function setHome(user) {
     const res = await web.views.publish({
-        'user_id': 'US8UHEKPB',
+        'user_id': user,
         'view': {
             "type": "home",
             "blocks": [
@@ -334,8 +337,38 @@ async function setHome() {
     //console.log(res);
 }
 
-//setHome();
 
+// QUERIES
+
+const eventsQuery = () => `
+    query {
+        eventbases(start: 0) {
+            id
+            title
+            start_time
+            area {
+                name
+            }
+        }
+    }
+`;
+
+const eventDataQuery = () => `
+    query {
+        eventbases(id: ${id}) {
+            title
+            description
+            start_time
+            end_time
+            area {
+                name
+            }
+            type
+        }
+    }
+`;
+
+//setHome();
 
 
 // (async () => {
