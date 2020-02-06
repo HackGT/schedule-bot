@@ -19,23 +19,117 @@ slackEvents.on('message', (event) => {
 })
 
 slackEvents.on('app_home_opened', (event) => {
-    if (event.tab == 'home' && event.user == 'US8UHEKPB') {
-        console.log("Setting home");
-        setHome();
-    }
+    console.log("Setting home");
+    setHome();
 })
 
 slackEvents.on('error', console.error);
 
 app.use('/slack/actions', slackInteractions.requestListener());
 
+slackInteractions.viewClosed('schedule_modal_callback_id', (payload) => {
+    console.log('View closed');
+})
+
+slackInteractions.viewSubmission('schedule_modal_callback_id', (payload) => {
+    console.log('View submitted');
+})
+
+slackInteractions.action({ type: 'static_select' }, (payload, respond) => {
+    console.log('static select');
+    //console.log('payload', payload);
+});
+
+slackInteractions.action({ actionId: 'button-identifier', type: 'button' }, (payload) => {
+    console.log('button');
+})
+
+slackInteractions.action({ type: 'external_select' }, (payload) => {
+    console.log('external select');
+})
+
+slackInteractions.action({ within: 'block_actions' }, (payload) => {
+    console.log(payload);
+    console.log("Block action called")
+    openModal(payload.trigger_id);
+})
+
+// Example of handling options request within block elements
+slackInteractions.options({ within: 'block_actions' }, (payload) => {
+    // Return a list of options to be shown to the user
+    console.log('block actions yuh');
+    return {
+        options: [
+            {
+                text: {
+                    type: 'plain_text',
+                    text: 'A good choice',
+                },
+                value: 'good_choice',
+            },
+        ],
+    };
+});
+
+async function openModal(trigger_id) {
+    const res = await web.views.open({
+        'trigger_id': trigger_id,
+        'view': {
+            "type": "modal",
+            "callback_id": "schedule_modal_callback_id",
+            'notify_on_close': true,
+            "title": {
+                "type": "plain_text",
+                "text": "Update Schedule"
+            },
+            "submit": {
+                "type": "plain_text",
+                "text": "Submit",
+                "emoji": true
+            },
+            "close": {
+                "type": "plain_text",
+                "text": "Cancel",
+                "emoji": true
+            },
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "*Choose an event to update*"
+                    }
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "external_select",
+                            "action_id": 'get_events',
+                            "placeholder": {
+                                "type": "plain_text",
+                                "text": "Select event",
+                                "emoji": true
+                            },
+                            "min_query_length": 0
+                        }
+                    ],
+                },
+
+            ]
+        }
+    })
+
+    console.log(res);
+}
 
 
 app.get('/*', (req, res) => {
     console.log('Loading get');
 })
 
-app.post('/*', (event) => {
+app.post('/*', (req, res) => {
+    console.log(req);
     console.log('Loading post');
 })
 
@@ -81,8 +175,11 @@ async function setHome() {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "A simple stack of blocks for the simple sample Block Kit Home tab."
+                        "text": "*Welcome to Schedule Changer!*"
                     }
+                },
+                {
+                    "type": "divider"
                 },
                 {
                     "type": "actions",
@@ -91,20 +188,30 @@ async function setHome() {
                             "type": "button",
                             "text": {
                                 "type": "plain_text",
-                                "text": "Action A",
+                                "text": "Update Schedule",
                                 "emoji": true
-                            }
-                        },
-                        {
-                            "type": "button",
-                            "text": {
-                                "type": "plain_text",
-                                "text": "Action B",
-                                "emoji": true
-                            }
+                            },
+                            "style": "primary",
+                            "value": "create_task"
                         }
                     ]
-                }
+                },
+                {
+                    "type": "section",
+                    "block_id": "section678233",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "Pick an item from the dropdown list"
+                    },
+                    "accessory": {
+                        "action_id": "text123423",
+                        "type": "external_select",
+                        "placeholder": {
+                            "type": "plain_text",
+                            "text": "Select an item"
+                        }
+                    }
+                },
             ]
         }
     })
