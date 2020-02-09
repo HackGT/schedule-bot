@@ -56,6 +56,7 @@ slackInteractions.viewClosed('schedule_modal_callback_id', (payload) => {
 })
 
 slackInteractions.viewSubmission('schedule_modal_callback_id', (payload) => {
+    console.log(payload.view.state.values);
     console.log('View submitted');
 })
 
