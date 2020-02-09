@@ -27,8 +27,8 @@ const eventDataQuery = (id) => `
 `;
 
 const addEventMutation = () => `
-    mutation AddEvent($createEvent: createEventbaseInput) {
-      createEventbase(input: $createEvent) {
+    mutation AddEvent($event: createEventbaseInput) {
+      createEventbase(input: $event) {
         eventbase {
           title
           start_time
