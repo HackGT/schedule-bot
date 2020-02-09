@@ -26,7 +26,48 @@ const eventDataQuery = (id) => `
     }
 `;
 
+const addEventMutation = () => `
+    mutation AddEvent($createEvent: createEventbaseInput) {
+      createEventbase(input: $createEvent) {
+        eventbase {
+          title
+          start_time
+          end_time
+          id
+        }
+      }
+    }
+`
+
+const updateEventMutation = () => `
+    mutation UpdateEvent($updateEvent: updateEventbaseInput) {
+      updateEventbase(input: $updateEvent) {
+        eventbase {
+          title
+          start_time
+          end_time
+          id
+        }
+      }
+    }
+`
+const deleteEventMutation = () => `
+    mutation DeleteEvent($deleteEvent: deleteEventbaseInput) {
+      deleteEventbase(input: $deleteEvent) {
+        eventbase {
+          title
+          start_time
+          end_time
+          id
+        }
+      }
+    }
+`
+
 module.exports = {
     eventsQuery,
-    eventDataQuery
+    eventDataQuery,
+    addEventMutation,
+    updateEventMutation,
+    deleteEventMutation
 }

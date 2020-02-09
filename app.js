@@ -7,21 +7,23 @@ const dateformat = require('dateformat');
 const express = require('express');
 
 const { updateJson, modalJson, homeJson } = require('./views.js');
-const { eventsQuery, eventDataQuery } = require('./queries.js');
+const { eventsQuery, eventDataQuery, addEventMutation, updateEventMutation, deleteEventMutation } = require('./queries.js');
 
 const web = new WebClient(process.env.SLACK_BOT_TOKEN);
 const slackEvents = createEventAdapter(process.env.SLACK_SIGNING_SECRET);
 const slackInteractions = createMessageAdapter(process.env.SLACK_SIGNING_SECRET);
 
-async function makeRequest(query) {
+async function makeRequest(query, variables = {}, token = '') {
     const res = await fetch(process.env.CMS_URL, {
         method: "POST",
         headers: {
             "Content-Type": `application/json`,
-            Accept: `application/json`
+            Accept: `application/json`,
+            'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-            query: query
+            query: query,
+            variables: variables
         })
     })
 
@@ -93,6 +95,18 @@ async function getEventData(id) {
     } else {
         console.log("Error retrieving data for event id: " + id);
     }
+}
+
+async function addEventData(data) {
+    const res = await makeRequest(addEventMutation(),data,process.env.token)
+}
+
+async function changeEventData(data) {
+    const res = await makeRequest(updateEventMutation(),data,process.env.token)
+}
+
+async function deleteEventData(data) {
+    const res = await makeRequest(deleteEventMutation(),data,process.env.token)
 }
 
 async function getEvents(query) {
