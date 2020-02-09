@@ -6,7 +6,7 @@ const fetch = require('node-fetch');
 const dateformat = require('dateformat');
 const express = require('express');
 
-const { updateJson, modalJson, homeJson } = require('./views.js');
+const { updateJson, defaultCreateEventJson, defaultEditEventJson, defaultDeleteEventJson, homeJson } = require('./views.js');
 const { eventsQuery, eventDataQuery, addEventMutation, updateEventMutation, deleteEventMutation } = require('./queries.js');
 
 const web = new WebClient(process.env.SLACK_BOT_TOKEN);
@@ -19,7 +19,7 @@ async function makeRequest(query, variables = {}, token = '') {
         headers: {
             "Content-Type": `application/json`,
             Accept: `application/json`,
-            'Authorization': `Bearer ${token}`
+            //'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
             query: query,
@@ -99,15 +99,15 @@ async function getEventData(id) {
 }
 
 async function addEventData(data) {
-    const res = await makeRequest(addEventMutation(),data,process.env.token)
+    const res = await makeRequest(addEventMutation(), data, process.env.token)
 }
 
 async function changeEventData(data) {
-    const res = await makeRequest(updateEventMutation(),data,process.env.token)
+    const res = await makeRequest(updateEventMutation(), data, process.env.token)
 }
 
 async function deleteEventData(data) {
-    const res = await makeRequest(deleteEventMutation(),data,process.env.token)
+    const res = await makeRequest(deleteEventMutation(), data, process.env.token)
 }
 
 async function getEvents(query) {
@@ -166,7 +166,7 @@ async function getEvents(query) {
 }
 
 async function openModal(trigger_id) {
-    const res = await web.views.open(modalJson(trigger_id));
+    const res = await web.views.open(defaultEditEventJson(trigger_id));
 }
 
 async function updateModal(modal_id, selected_event) {

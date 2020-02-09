@@ -10,33 +10,73 @@ const homeJson = (user) => {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "*Welcome to Schedule Changer!*"
+                        "text": "*CMS Changes: What would you like to do?*"
                     }
                 },
                 {
                     "type": "divider"
                 },
                 {
-                    "type": "actions",
-                    "elements": [
-                        {
-                            "type": "button",
-                            "text": {
-                                "type": "plain_text",
-                                "text": "Change Schedule",
-                                "emoji": true
-                            },
-                            "style": "primary",
-                            "action_id": "open_schedule_modal"
-                        }
-                    ]
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": ":calendar: *Create event*\nCreate a new event"
+                    },
+                    "accessory": {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Create event",
+                            "emoji": true
+                        },
+                        "style": "primary"
+                    }
                 },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": ":pencil: *Edit event*\nEdit an existing event "
+                    },
+                    "accessory": {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Edit event",
+                            "emoji": true
+                        },
+                        "style": "primary",
+                        "action_id": "open_schedule_modal"
+                    }
+                },
+                {
+                    "type": "divider"
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": ":x: *Delete event*\n Remove an event "
+                    },
+                    "accessory": {
+                        "type": "button",
+                        "text": {
+                            "type": "plain_text",
+                            "text": "Delete event",
+                            "emoji": true
+                        },
+                        "style": "primary"
+                    }
+                }
             ]
         }
     }
 }
 
-const modalJson = (trigger_id) => {
+const defaultCreateEventJson = (trigger_id) => {
     return {
         'trigger_id': trigger_id,
         'view': {
@@ -45,7 +85,7 @@ const modalJson = (trigger_id) => {
             'notify_on_close': true,
             "title": {
                 "type": "plain_text",
-                "text": "Update Schedule"
+                "text": "Create Event"
             },
             "submit": {
                 "type": "plain_text",
@@ -62,7 +102,41 @@ const modalJson = (trigger_id) => {
                     "type": "section",
                     "text": {
                         "type": "mrkdwn",
-                        "text": "*Choose an event to update*"
+                        "text": "Create event"
+                    }
+                }
+            ]
+        }
+    }
+}
+
+const defaultEditEventJson = (trigger_id) => {
+    return {
+        'trigger_id': trigger_id,
+        'view': {
+            "type": "modal",
+            "callback_id": "schedule_modal_callback_id",
+            'notify_on_close': true,
+            "title": {
+                "type": "plain_text",
+                "text": "Edit Event"
+            },
+            "submit": {
+                "type": "plain_text",
+                "text": "Submit",
+                "emoji": true
+            },
+            "close": {
+                "type": "plain_text",
+                "text": "Cancel",
+                "emoji": true
+            },
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "*Choose an event to edit*"
                     }
                 },
                 {
@@ -79,8 +153,56 @@ const modalJson = (trigger_id) => {
                             "min_query_length": 0
                         }
                     ],
-                },
+                }
+            ]
+        }
+    }
+}
 
+const defaultDeleteEventJson = (trigger_id) => {
+    return {
+        'trigger_id': trigger_id,
+        'view': {
+            "type": "modal",
+            "callback_id": "schedule_modal_callback_id",
+            'notify_on_close': true,
+            "title": {
+                "type": "plain_text",
+                "text": "Delete Event"
+            },
+            "submit": {
+                "type": "plain_text",
+                "text": "Submit",
+                "emoji": true
+            },
+            "close": {
+                "type": "plain_text",
+                "text": "Cancel",
+                "emoji": true
+            },
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "*Choose an event to delete*"
+                    }
+                },
+                {
+                    "type": "actions",
+                    "elements": [
+                        {
+                            "type": "external_select",
+                            "action_id": 'event_select',
+                            "placeholder": {
+                                "type": "plain_text",
+                                "text": "Select event",
+                                "emoji": true
+                            },
+                            "min_query_length": 0
+                        }
+                    ],
+                }
             ]
         }
     }
@@ -1803,6 +1925,8 @@ const updateJson = (modal_id, selected_event, data) => {
 
 module.exports = {
     homeJson,
-    modalJson,
+    defaultCreateEventJson,
+    defaultEditEventJson,
+    defaultDeleteEventJson,
     updateJson
 }
