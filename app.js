@@ -13,14 +13,17 @@ const web = new WebClient(process.env.SLACK_BOT_TOKEN);
 const slackEvents = createEventAdapter(process.env.SLACK_SIGNING_SECRET);
 const slackInteractions = createMessageAdapter(process.env.SLACK_SIGNING_SECRET);
 
-async function makeRequest(query, variables = {}, token = '') {
+async function makeRequest(query, variables = {}, token = "") {
+    headers = {
+        "Content-Type": `application/json`,
+        Accept: `application/json`
+    }
+    if(token) {
+        headers['Authorization'] = `Bearer ${token}`
+    }
     const res = await fetch(process.env.CMS_URL, {
         method: "POST",
-        headers: {
-            "Content-Type": `application/json`,
-            Accept: `application/json`,
-            //'Authorization': `Bearer ${token}`
-        },
+        headers: headers,
         body: JSON.stringify({
             query: query,
             variables: variables
