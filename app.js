@@ -6,8 +6,8 @@ const fetch = require('node-fetch');
 const dateformat = require('dateformat');
 const express = require('express');
 
-const { updateJson, defaultCreateEventJson, defaultEditEventJson, defaultDeleteEventJson, homeJson } = require('./views.js');
-const { eventsQuery, eventDataQuery, addEventMutation, updateEventMutation, deleteEventMutation } = require('./queries.js');
+const { secondEditEventJson, modalJson, homeJson } = require('./views.js');
+const { eventsQuery, areasQuery, eventDataQuery, addEventMutation, updateEventMutation, deleteEventMutation } = require('./queries.js');
 
 const web = new WebClient(process.env.SLACK_BOT_TOKEN);
 const slackEvents = createEventAdapter(process.env.SLACK_SIGNING_SECRET);
@@ -18,7 +18,7 @@ async function makeRequest(query, variables = {}, token = "") {
         "Content-Type": `application/json`,
         Accept: `application/json`
     }
-    if(token) {
+    if (token) {
         headers['Authorization'] = `Bearer ${token}`
     }
     const res = await fetch(process.env.CMS_URL, {
@@ -37,6 +37,11 @@ async function makeRequest(query, variables = {}, token = "") {
 String.prototype.trunc = String.prototype.trunc ||
     function (n) {
         return (this.length > n) ? this.substr(0, n - 1) + '...' : this;
+    };
+
+String.prototype.capitalize = String.prototype.capitalize ||
+    function () {
+        return this.charAt(0).toUpperCase() + this.slice(1);
     };
 
 const app = express();
@@ -61,31 +66,48 @@ slackInteractions.viewClosed('schedule_modal_callback_id', (payload) => {
 })
 
 slackInteractions.viewSubmission('schedule_modal_callback_id', (payload) => {
-    console.log(payload.view.state.values);
     console.log('View submitted');
+
+    let data = payload.view.state.values;
+    let parsed = {
+        "title": data.title.titleInput.value,
+        "description": data.description.descriptionInput.value || '',
+        "start_time": data.startDate.startDatePicker.selected_date + " " + data.startTime.startTimeSelect.selected_option.value,
+        "end_time": data.endDate.endDatePicker.selected_date + " " + data.endTime.endTimeSelect.selected_option.value,
+        "area": data.area.areaSelect.selected_option.value,
+        "type": data.type.typeSelect.selected_option.value
+    }
+
+
 })
 
-slackInteractions.action({ actionId: 'event_select' }, (payload) => {
+slackInteractions.action({ actionId: 'eventSelect' }, (payload) => {
     console.log('Event selected; Updating modal');
 
     updateModal(payload.view.id, payload.actions[0].selected_option);
 })
 
-slackInteractions.action({ actionId: 'open_schedule_modal' }, (payload) => {
+slackInteractions.action({ actionId: 'open_modal' }, async (payload) => {
     console.log('Opening modal')
 
-    openModal(payload.trigger_id);
+    const res = await web.views.open(modalJson(payload.trigger_id, payload.actions[0].value));
 })
 
 slackInteractions.action({ within: 'block_actions' }, (payload) => {
     console.log("Default block action called")
 })
 
-slackInteractions.options({ actionId: 'event_select' }, (payload) => {
+slackInteractions.options({ actionId: 'eventSelect' }, (payload) => {
     console.log('Getting events');
 
     return getEvents(payload.value);
 });
+
+slackInteractions.options({ actionId: "areaSelect" }, (payload) => {
+    console.log('Getting areas');
+
+    return getAreas();
+})
 
 async function getEventData(id) {
     const res = await makeRequest(eventDataQuery(id))
@@ -113,8 +135,32 @@ async function deleteEventData(data) {
     const res = await makeRequest(deleteEventMutation(), data, process.env.token)
 }
 
+async function getAreas() {
+    const res = await makeRequest(areasQuery());
+
+    console.log("Fetched areas data");
+
+    let data = await res.json();
+    data = data.data.areas;
+
+    let options = {
+        "options": []
+    };
+
+    for (area of data) {
+        options.options.push({
+            text: {
+                type: "plain_text",
+                text: area.name
+            },
+            value: area.id
+        })
+    }
+    return options;
+}
+
 async function getEvents(query) {
-    const res = await makeRequest(eventsQuery())
+    const res = await makeRequest(eventsQuery());
 
     console.log("Fetched event data");
 
@@ -168,10 +214,6 @@ async function getEvents(query) {
     return options;
 }
 
-async function openModal(trigger_id) {
-    const res = await web.views.open(defaultEditEventJson(trigger_id));
-}
-
 async function updateModal(modal_id, selected_event) {
 
     data = await getEventData(selected_event.value);
@@ -179,7 +221,7 @@ async function updateModal(modal_id, selected_event) {
     data.startDate = new Date(data.start_time);
     data.endDate = new Date(data.end_time);
 
-    const res = await web.views.update(updateJson(modal_id, selected_event, data));
+    const res = await web.views.update(secondEditEventJson(modal_id, selected_event, data));
 }
 
 async function getUsers() {

@@ -4,12 +4,18 @@ const eventsQuery = () => `
             id
             title
             start_time
-            area {
-                name
-            }
         }
     }
 `;
+
+const areasQuery = () => `
+    query {
+        areas(start: 0) {
+            id
+            name
+        }
+    }
+`
 
 const eventDataQuery = (id) => `
     query {
@@ -20,6 +26,7 @@ const eventDataQuery = (id) => `
             end_time
             area {
                 name
+                id
             }
             type
         }
@@ -40,8 +47,8 @@ const addEventMutation = () => `
 `
 
 const updateEventMutation = () => `
-    mutation UpdateEvent($updateEvent: updateEventbaseInput) {
-      updateEventbase(input: $updateEvent) {
+    mutation UpdateEvent($event: updateEventbaseInput) {
+      updateEventbase(input: $event) {
         eventbase {
           title
           start_time
@@ -52,8 +59,8 @@ const updateEventMutation = () => `
     }
 `
 const deleteEventMutation = () => `
-    mutation DeleteEvent($deleteEvent: deleteEventbaseInput) {
-      deleteEventbase(input: $deleteEvent) {
+    mutation DeleteEvent($event: deleteEventbaseInput) {
+      deleteEventbase(input: $event) {
         eventbase {
           title
           start_time
@@ -65,9 +72,10 @@ const deleteEventMutation = () => `
 `
 
 module.exports = {
-    eventsQuery,
-    eventDataQuery,
-    addEventMutation,
-    updateEventMutation,
-    deleteEventMutation
+  eventsQuery,
+  areasQuery,
+  eventDataQuery,
+  addEventMutation,
+  updateEventMutation,
+  deleteEventMutation
 }
