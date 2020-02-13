@@ -73,7 +73,6 @@ slackInteractions.viewSubmission('edit_modal_callback_id', async (payload) => {
     parsedData.event.where = {
         "id": payload.view.private_metadata
     }
-    console.log(parsedData);
 
     const res = await makeRequest(updateEventMutation(), parsedData, process.env.CMS_TOKEN);
     if (res.status == 200) {
@@ -88,7 +87,6 @@ slackInteractions.viewSubmission('create_modal_callback_id', async (payload) => 
 
     let parsedData = parseData(payload.view.state.values);
     parsedData.event.data.public = true;
-    console.log(parsedData);
 
     const res = await makeRequest(addEventMutation(), parsedData, process.env.CMS_TOKEN);
     if (res.status == 200) {
@@ -140,7 +138,6 @@ function parseData(data) {
 
 slackInteractions.action({ actionId: 'eventSelect' }, async (payload) => {
     console.log('Event selected; Updating modal');
-    console.log(payload.actions[0].selected_option);
 
     let selected_event = payload.actions[0].selected_option;
     let data = await getEventData(selected_event.value);
@@ -193,6 +190,14 @@ async function getAreas() {
     console.log("Fetched areas data");
 
     let data = await res.json();
+
+    if (data.errors) {
+        console.error(data.errors);
+        return [];
+    } else if (!data.data.areas) {
+        return [];
+    }
+
     data = data.data.areas;
 
     let options = {
@@ -217,6 +222,14 @@ async function getEvents(query) {
     console.log("Fetched event data");
 
     let data = await res.json();
+
+    if (data.errors) {
+        console.error(data.errors);
+        return [];
+    } else if (!data.data.eventbases) {
+        return [];
+    }
+
     data = data.data.eventbases;
 
     // Filters events based on what the user types in the dropdown box
