@@ -52,39 +52,83 @@ slackEvents.on('message', (event) => {
     console.log(`Received a message event: user ${event.user} in channel ${event.channel} says ${event.text}`);
 })
 
-slackEvents.on('app_home_opened', (event) => {
+slackEvents.on('app_home_opened', async (event) => {
     console.log("Setting home");
-    setHome(event.user);
+
+    const res = await web.views.publish(homeJson(event.user));
 })
 
 slackEvents.on('error', console.error);
 
 app.use('/slack/actions', slackInteractions.requestListener());
 
-slackInteractions.viewClosed('schedule_modal_callback_id', (payload) => {
+slackInteractions.viewClosed('schedule_modal_callback_id', async (payload) => {
     console.log('View closed');
 })
 
-slackInteractions.viewSubmission('schedule_modal_callback_id', (payload) => {
-    console.log('View submitted');
+slackInteractions.viewSubmission('edit_modal_callback_id', async (payload) => {
+    console.log('Edit modal submitted');
 
-    let data = payload.view.state.values;
-    let parsed = {
-        "title": data.title.titleInput.value,
-        "description": data.description.descriptionInput.value || '',
-        "start_time": data.startDate.startDatePicker.selected_date + " " + data.startTime.startTimeSelect.selected_option.value,
-        "end_time": data.endDate.endDatePicker.selected_date + " " + data.endTime.endTimeSelect.selected_option.value,
-        "area": data.area.areaSelect.selected_option.value,
-        "type": data.type.typeSelect.selected_option.value
+    let parsedData = parseData(payload.view.state.values);
+    parsedData.event.where = {
+        "id": payload.view.private_metadata
     }
+    console.log(parsedData);
 
-
+    const res = await makeRequest(updateEventMutation(), parsedData, process.env.CMS_TOKEN);
+    if (res.status == 200) {
+        console.log("Event successfully edited");
+    } else {
+        console.error("Event could not be updated, ", res.statusTest);
+    }
 })
 
-slackInteractions.action({ actionId: 'eventSelect' }, (payload) => {
-    console.log('Event selected; Updating modal');
+slackInteractions.viewSubmission('create_modal_callback_id', async (payload) => {
+    console.log('Create modal submitted');
 
-    updateModal(payload.view.id, payload.actions[0].selected_option);
+    let parsedData = parseData(payload.view.state.values);
+    parsedData.event.data.public = true;
+    console.log(parsedData);
+
+    const res = await makeRequest(addEventMutation(), parsedData, process.env.CMS_TOKEN);
+    if (res.status == 200) {
+        console.log("Event successfully created");
+    } else {
+        console.error("Event could not be created, ", res.statusTest);
+    }
+})
+
+function parseData(data) {
+    try {
+        let parsed = {
+            "event": {
+                "data": {
+                    "title": data.title.titleInput.value,
+                    "description": data.description.descriptionInput.value || '',
+                    "start_time": data.startDate.startDatePicker.selected_date + " " + data.startTime.startTimeSelect.selected_option.value,
+                    "end_time": data.endDate.endDatePicker.selected_date + " " + data.endTime.endTimeSelect.selected_option.value,
+                    "area": data.area.areaSelect.selected_option.value,
+                    "type": data.type.typeSelect.selected_option.value
+                }
+            }
+        }
+        return parsed;
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+slackInteractions.action({ actionId: 'eventSelect' }, async (payload) => {
+    console.log('Event selected; Updating modal');
+    console.log(payload.actions[0].selected_option);
+
+    let selected_event = payload.actions[0].selected_option;
+    let data = await getEventData(selected_event.value);
+
+    data.startDate = new Date(data.start_time);
+    data.endDate = new Date(data.end_time);
+
+    const res = await web.views.update(secondEditEventJson(payload.view.id, selected_event, data));
 })
 
 slackInteractions.action({ actionId: 'open_modal' }, async (payload) => {
@@ -100,13 +144,13 @@ slackInteractions.action({ within: 'block_actions' }, (payload) => {
 slackInteractions.options({ actionId: 'eventSelect' }, (payload) => {
     console.log('Getting events');
 
-    return getEvents(payload.value);
+    return getEvents(payload.value).catch(console.error);
 });
 
 slackInteractions.options({ actionId: "areaSelect" }, (payload) => {
     console.log('Getting areas');
 
-    return getAreas();
+    return getAreas().catch(console.error);
 })
 
 async function getEventData(id) {
@@ -123,16 +167,8 @@ async function getEventData(id) {
     }
 }
 
-async function addEventData(data) {
-    const res = await makeRequest(addEventMutation(), data, process.env.token)
-}
-
-async function changeEventData(data) {
-    const res = await makeRequest(updateEventMutation(), data, process.env.token)
-}
-
 async function deleteEventData(data) {
-    const res = await makeRequest(deleteEventMutation(), data, process.env.token)
+    const res = await makeRequest(deleteEventMutation(), data, process.env.CMS_TOKEN)
 }
 
 async function getAreas() {
@@ -169,6 +205,9 @@ async function getEvents(query) {
 
     // Filters events based on what the user types in the dropdown box
     data = data.filter((event) => {
+        if (!event.id || !event.title || !event.start_time) {
+            return false;
+        }
         return event.title.toLowerCase().replace(/\s/g, '').includes(query.toLowerCase().replace(/\s/g, ''));
     });
 
@@ -212,25 +251,6 @@ async function getEvents(query) {
     }
 
     return options;
-}
-
-async function updateModal(modal_id, selected_event) {
-
-    data = await getEventData(selected_event.value);
-
-    data.startDate = new Date(data.start_time);
-    data.endDate = new Date(data.end_time);
-
-    const res = await web.views.update(secondEditEventJson(modal_id, selected_event, data));
-}
-
-async function getUsers() {
-    console.log("Getting users");
-    const res = await web.users.list();
-}
-
-async function setHome(user) {
-    const res = await web.views.publish(homeJson(user));
 }
 
 app.get('/*', (req, res) => {

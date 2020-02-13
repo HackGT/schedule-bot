@@ -876,7 +876,7 @@ const headerJson = (text, selected_event = undefined) => {
             "elements": [
                 {
                     "type": "external_select",
-                    "action_id": 'eventSelect',
+                    "action_id": "eventSelect",
                     "placeholder": {
                         "type": "plain_text",
                         "text": "Select event",
@@ -1050,7 +1050,7 @@ const bodyJson = (data = undefined) => {
                     "text": "Select event location",
                     "emoji": true
                 },
-                "initial_option": data ? {
+                "initial_option": (data && data.area) ? {
                     "text": {
                         "type": "plain_text",
                         "text": data.area.name,
@@ -1077,7 +1077,7 @@ const bodyJson = (data = undefined) => {
                     "text": "Select event type",
                     "emoji": true
                 },
-                "initial_option": data ? {
+                "initial_option": (data && data.type) ? {
                     "text": {
                         "type": "plain_text",
                         "text": data.type.capitalize(),
@@ -1139,11 +1139,11 @@ const bodyJson = (data = undefined) => {
 
 const firstCreateEventJson = (trigger_id) => {
     return {
-        'trigger_id': trigger_id,
-        'view': {
+        "trigger_id": trigger_id,
+        "view": {
             "type": "modal",
-            "callback_id": "schedule_modal_callback_id",
-            'notify_on_close': true,
+            "callback_id": "create_modal_callback_id",
+            "notify_on_close": true,
             "title": {
                 "type": "plain_text",
                 "text": "Create Event"
@@ -1165,19 +1165,13 @@ const firstCreateEventJson = (trigger_id) => {
 
 const firstEditEventJson = (trigger_id) => {
     return {
-        'trigger_id': trigger_id,
-        'view': {
+        "trigger_id": trigger_id,
+        "view": {
             "type": "modal",
-            "callback_id": "schedule_modal_callback_id",
             'notify_on_close': true,
             "title": {
                 "type": "plain_text",
                 "text": "Edit Event"
-            },
-            "submit": {
-                "type": "plain_text",
-                "text": "Submit",
-                "emoji": true
             },
             "close": {
                 "type": "plain_text",
@@ -1194,7 +1188,6 @@ const firstDeleteEventJson = (trigger_id) => {
         'trigger_id': trigger_id,
         'view': {
             "type": "modal",
-            "callback_id": "schedule_modal_callback_id",
             'notify_on_close': true,
             "title": {
                 "type": "plain_text",
@@ -1220,7 +1213,7 @@ const secondEditEventJson = (modal_id, selected_event, data) => {
         "view_id": modal_id,
         "view": {
             "type": "modal",
-            "callback_id": "schedule_modal_callback_id",
+            "callback_id": "edit_modal_callback_id",
             'notify_on_close': true,
             "title": {
                 "type": "plain_text",
@@ -1236,6 +1229,7 @@ const secondEditEventJson = (modal_id, selected_event, data) => {
                 "text": "Cancel",
                 "emoji": true
             },
+            "private_metadata": selected_event.value,
             "blocks": headerJson("edit", selected_event).concat(dividerJson(), bodyJson(data))
         }
     }
