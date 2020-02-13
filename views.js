@@ -862,13 +862,13 @@ const modalJson = (trigger_id, value) => {
     }
 }
 
-const headerJson = (text, selected_event = undefined) => {
+const editHeaderJson = (selected_event = undefined) => {
     return [
         {
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": `*Choose an event to ${text}*`
+                "text": `*Choose an event to edit*`
             }
         },
         {
@@ -886,6 +886,37 @@ const headerJson = (text, selected_event = undefined) => {
                     "initial_option": selected_event
                 }
             ],
+        }
+    ]
+}
+
+const deleteHeaderJson = () => {
+    return [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": `*Choose an event to delete*`
+            }
+        },
+        {
+            "type": "input",
+            "block_id": "event",
+            "element": {
+                "type": "external_select",
+                "action_id": "eventSelect",
+                "placeholder": {
+                    "type": "plain_text",
+                    "text": "Select event",
+                    "emoji": true
+                },
+                "min_query_length": 0,
+            },
+            "label": {
+                "type": "plain_text",
+                "text": " ",
+                "emoji": true
+            }
         }
     ]
 }
@@ -1178,7 +1209,7 @@ const firstEditEventJson = (trigger_id) => {
                 "text": "Cancel",
                 "emoji": true
             },
-            "blocks": headerJson("edit")
+            "blocks": editHeaderJson()
         }
     }
 }
@@ -1188,6 +1219,7 @@ const firstDeleteEventJson = (trigger_id) => {
         'trigger_id': trigger_id,
         'view': {
             "type": "modal",
+            "callback_id": "delete_modal_callback_id",
             'notify_on_close': true,
             "title": {
                 "type": "plain_text",
@@ -1203,7 +1235,7 @@ const firstDeleteEventJson = (trigger_id) => {
                 "text": "Cancel",
                 "emoji": true
             },
-            "blocks": headerJson("delete")
+            "blocks": deleteHeaderJson()
         }
     }
 }
@@ -1230,7 +1262,7 @@ const secondEditEventJson = (modal_id, selected_event, data) => {
                 "emoji": true
             },
             "private_metadata": selected_event.value,
-            "blocks": headerJson("edit", selected_event).concat(dividerJson(), bodyJson(data))
+            "blocks": editHeaderJson(selected_event).concat(dividerJson(), bodyJson(data))
         }
     }
 }

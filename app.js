@@ -98,6 +98,26 @@ slackInteractions.viewSubmission('create_modal_callback_id', async (payload) => 
     }
 })
 
+slackInteractions.viewSubmission('delete_modal_callback_id', async (payload) => {
+    console.log('Delete modal submitted');
+
+    let parsedData = {
+        "event": {
+            "where": {
+                "id": payload.view.state.values.event.eventSelect.selected_option.value
+            }
+        }
+    }
+    console.log(parsedData);
+
+    const res = await makeRequest(deleteEventMutation(), parsedData, process.env.CMS_TOKEN)
+    if (res.status == 200) {
+        console.log("Event successfully deleted");
+    } else {
+        console.error("Event could not be deleted, ", res.statusTest);
+    }
+})
+
 function parseData(data) {
     try {
         let parsed = {
@@ -165,10 +185,6 @@ async function getEventData(id) {
     } else {
         console.log("Error retrieving data for event id: " + id);
     }
-}
-
-async function deleteEventData(data) {
-    const res = await makeRequest(deleteEventMutation(), data, process.env.CMS_TOKEN)
 }
 
 async function getAreas() {
