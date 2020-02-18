@@ -4,10 +4,6 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc",
-    "dev": "ts-node-dev --respawn --transpileOnly ./app.ts",
-    "prod": "tsc && node ./dist/app.js",
     "start": "node app.js"
   },
   "author": "",
@@ -21,12 +17,6 @@
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "morgan": "^1.9.1",
-    "node-fetch": "^2.6.0",
-    "typescript": "^3.7.5"
-  },
-  "devDependencies": {
-    "@types/express": "^4.17.2",
-    "@types/node": "^13.7.0",
-    "ts-node-dev": "^1.0.0-pre.44"
+    "node-fetch": "^2.6.0"
   }
 }
