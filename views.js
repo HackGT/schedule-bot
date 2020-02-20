@@ -1287,9 +1287,72 @@ const secondEditEventJson = (modal_id, selected_event, data) => {
     }
 }
 
+const successJson = () => {
+    return {
+        "response_action": "update",
+        "view": {
+            "type": "modal",
+            "title": {
+                "type": "plain_text",
+                "text": "CMS Success"
+            },
+            "close": {
+                "type": "plain_text",
+                "text": "Done",
+                "emoji": true
+            },
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "*Yay! CMS was successfully updated.*"
+                    }
+                }
+            ]
+        }
+    }
+}
+
+const failureJson = (error) => {
+    return {
+        "response_action": "update",
+        "view": {
+            "type": "modal",
+            "title": {
+                "type": "plain_text",
+                "text": "CMS Error"
+            },
+            "close": {
+                "type": "plain_text",
+                "text": "Done",
+                "emoji": true
+            },
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "*:( There was an error updating CMS. Please contact a member of the tech team*"
+                    }
+                },
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "Error: " + error
+                    }
+                }
+            ]
+        }
+    }
+}
+
 module.exports = {
     homeJson,
     unauthorizedHomeJson,
     modalJson,
-    secondEditEventJson
+    secondEditEventJson,
+    successJson,
+    failureJson
 }

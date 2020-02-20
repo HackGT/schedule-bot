@@ -8,7 +8,7 @@ const express = require('express');
 const morgan = require('morgan');
 const chalk = require('chalk');
 
-const { secondEditEventJson, modalJson, homeJson, unauthorizedHomeJson } = require('./views.js');
+const { secondEditEventJson, modalJson, homeJson, unauthorizedHomeJson, successJson, failureJson } = require('./views.js');
 const { eventsQuery, areasQuery, eventDataQuery, addEventMutation, updateEventMutation, deleteEventMutation } = require('./queries.js');
 const { authorizedUsers } = require('./authorizedUsers');
 
@@ -97,8 +97,10 @@ slackInteractions.viewSubmission('edit_modal_callback_id', async (payload) => {
     const res = await makeRequest(updateEventMutation(), parsedData, process.env.CMS_TOKEN);
     if (res.status == 200) {
         console.log("Event successfully edited");
+        return successJson();
     } else {
         console.error("Event could not be updated, ", res.statusTest);
+        return failureJson(res.statusText);
     }
 })
 
@@ -111,8 +113,10 @@ slackInteractions.viewSubmission('create_modal_callback_id', async (payload) => 
     const res = await makeRequest(addEventMutation(), parsedData, process.env.CMS_TOKEN);
     if (res.status == 200) {
         console.log("Event successfully created");
+        return successJson();
     } else {
         console.error("Event could not be created, ", res.statusTest);
+        return failureJson(res.statusText);
     }
 })
 
@@ -126,13 +130,14 @@ slackInteractions.viewSubmission('delete_modal_callback_id', async (payload) => 
             }
         }
     }
-    console.log(parsedData);
 
     const res = await makeRequest(deleteEventMutation(), parsedData, process.env.CMS_TOKEN)
     if (res.status == 200) {
         console.log("Event successfully deleted");
+        return successJson();
     } else {
         console.error("Event could not be deleted, ", res.statusTest);
+        return failureJson(res.statusText);
     }
 })
 
@@ -303,10 +308,12 @@ async function getEvents(query) {
 }
 
 app.get('/*', (req, res) => {
+    res.send("Default get");
     console.log('Loading get');
 })
 
 app.post('/*', (req, res) => {
+    res.send("Default post");
     console.log('Loading post');
 })
 
