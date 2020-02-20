@@ -852,6 +852,24 @@ const homeJson = (user) => {
     }
 }
 
+const unauthorizedHomeJson = (user) => {
+    return {
+        "user_id": user,
+        "view": {
+            "type": "home",
+            "blocks": [
+                {
+                    "type": "section",
+                    "text": {
+                        "type": "mrkdwn",
+                        "text": "*Sorry, you do not have access to this page. Please contact a HackGT tech member for more information*"
+                    }
+                }
+            ]
+        }
+    }
+}
+
 const modalJson = (trigger_id, value) => {
     if (value == "create") {
         return firstCreateEventJson(trigger_id);
@@ -929,6 +947,8 @@ const dividerJson = () => {
     ]
 }
 
+// The data variable represents the initial value of the form
+// If it is undefined, the form will have no initial values (ie. when creating an event)
 const bodyJson = (data = undefined) => {
     return [
         {
@@ -1269,6 +1289,7 @@ const secondEditEventJson = (modal_id, selected_event, data) => {
 
 module.exports = {
     homeJson,
+    unauthorizedHomeJson,
     modalJson,
     secondEditEventJson
 }

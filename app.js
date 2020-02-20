@@ -5,9 +5,12 @@ const { createMessageAdapter } = require('@slack/interactive-messages');
 const fetch = require('node-fetch');
 const dateformat = require('dateformat');
 const express = require('express');
+const morgan = require('morgan');
+const chalk = require('chalk');
 
-const { secondEditEventJson, modalJson, homeJson } = require('./views.js');
+const { secondEditEventJson, modalJson, homeJson, unauthorizedHomeJson } = require('./views.js');
 const { eventsQuery, areasQuery, eventDataQuery, addEventMutation, updateEventMutation, deleteEventMutation } = require('./queries.js');
+const { authorizedUsers } = require('./authorizedUsers');
 
 const web = new WebClient(process.env.SLACK_BOT_TOKEN);
 const slackEvents = createEventAdapter(process.env.SLACK_SIGNING_SECRET);
@@ -46,6 +49,19 @@ String.prototype.capitalize = String.prototype.capitalize ||
 
 const app = express();
 
+app.use(morgan(function (tokens, req, res) {
+    var status = tokens.status(req, res)
+    var statusColor = status >= 500
+        ? 'red' : status >= 400
+            ? 'yellow' : status >= 300
+                ? 'cyan' : 'green'
+
+    return chalk.reset(tokens.method(req, res) + ' ' + tokens.url(req, res))
+        + ' ' + chalk[statusColor](status)
+        + ' ' + chalk.reset(tokens['response-time'](req, res) + ' ms')
+}))
+
+
 app.use('/slack/events', slackEvents.requestListener())
 
 slackEvents.on('message', (event) => {
@@ -55,7 +71,11 @@ slackEvents.on('message', (event) => {
 slackEvents.on('app_home_opened', async (event) => {
     console.log("Setting home");
 
-    const res = await web.views.publish(homeJson(event.user));
+    if (authorizedUsers.map(user => user.id).includes(event.user)) {
+        const res = await web.views.publish(homeJson(event.user));
+    } else {
+        const res = await web.views.publish(unauthorizedHomeJson(event.user));
+    }
 })
 
 slackEvents.on('error', console.error);
