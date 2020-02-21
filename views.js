@@ -776,80 +776,84 @@ const homeJson = (user) => {
         "user_id": user,
         "view": {
             "type": "home",
-            "blocks": [
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "*CMS Changes: What would you like to do?*"
-                    }
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": ":calendar: *Create event*\nCreate a new event"
-                    },
-                    "accessory": {
-                        "type": "button",
-                        "text": {
-                            "type": "plain_text",
-                            "text": "Create event",
-                            "emoji": true
-                        },
-                        "style": "primary",
-                        "action_id": "open_modal",
-                        "value": "create"
-                    }
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": ":pencil: *Edit event*\nEdit an existing event "
-                    },
-                    "accessory": {
-                        "type": "button",
-                        "text": {
-                            "type": "plain_text",
-                            "text": "Edit event",
-                            "emoji": true
-                        },
-                        "style": "primary",
-                        "action_id": "open_modal",
-                        "value": "edit"
-                    }
-                },
-                {
-                    "type": "divider"
-                },
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": ":x: *Delete event*\n Remove an event "
-                    },
-                    "accessory": {
-                        "type": "button",
-                        "text": {
-                            "type": "plain_text",
-                            "text": "Delete event",
-                            "emoji": true
-                        },
-                        "style": "primary",
-                        "action_id": "open_modal",
-                        "value": "delete"
-                    }
-                }
-            ]
+            "blocks": homeJsonBlocks()
         }
     }
+}
+
+const homeJsonBlocks = () => {
+    return [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "*CMS Changes: What would you like to do?*"
+            }
+        },
+        {
+            "type": "divider"
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": ":calendar: *Create a new event*"
+            },
+            "accessory": {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Create event",
+                    "emoji": true
+                },
+                "style": "primary",
+                "action_id": "open_modal",
+                "value": "create"
+            }
+        },
+        {
+            "type": "divider"
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": ":pencil: *Edit an event*"
+            },
+            "accessory": {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Edit event",
+                    "emoji": true
+                },
+                "style": "primary",
+                "action_id": "open_modal",
+                "value": "edit"
+            }
+        },
+        {
+            "type": "divider"
+        },
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": ":x: *Delete an event*"
+            },
+            "accessory": {
+                "type": "button",
+                "text": {
+                    "type": "plain_text",
+                    "text": "Delete event",
+                    "emoji": true
+                },
+                "style": "primary",
+                "action_id": "open_modal",
+                "value": "delete"
+            }
+        }
+    ]
 }
 
 const unauthorizedHomeJson = (user) => {
@@ -857,17 +861,21 @@ const unauthorizedHomeJson = (user) => {
         "user_id": user,
         "view": {
             "type": "home",
-            "blocks": [
-                {
-                    "type": "section",
-                    "text": {
-                        "type": "mrkdwn",
-                        "text": "*Sorry, you do not have access to this page. Please contact a HackGT tech member for more information*"
-                    }
-                }
-            ]
+            "blocks": unauthorizedHomeJsonBlocks()
         }
     }
+}
+
+const unauthorizedHomeJsonBlocks = () => {
+    return [
+        {
+            "type": "section",
+            "text": {
+                "type": "mrkdwn",
+                "text": "*Sorry, you do not have access to this page. Please contact a HackGT tech member for more information*"
+            }
+        }
+    ]
 }
 
 const modalJson = (trigger_id, value) => {
@@ -1350,7 +1358,9 @@ const failureJson = (error) => {
 
 module.exports = {
     homeJson,
+    homeJsonBlocks,
     unauthorizedHomeJson,
+    unauthorizedHomeJsonBlocks,
     modalJson,
     secondEditEventJson,
     successJson,

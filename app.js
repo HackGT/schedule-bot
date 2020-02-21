@@ -8,7 +8,7 @@ const express = require('express');
 const morgan = require('morgan');
 const chalk = require('chalk');
 
-const { secondEditEventJson, modalJson, homeJson, unauthorizedHomeJson, successJson, failureJson } = require('./views.js');
+const { secondEditEventJson, modalJson, homeJson, homeJsonBlocks, unauthorizedHomeJson, unauthorizedHomeJsonBlocks, successJson, failureJson } = require('./views.js');
 const { eventsQuery, areasQuery, eventDataQuery, addEventMutation, updateEventMutation, deleteEventMutation } = require('./queries.js');
 const { authorizedUsers } = require('./authorizedUsers');
 
@@ -82,8 +82,10 @@ slackEvents.on('error', console.error);
 
 app.use('/slack/actions', slackInteractions.requestListener());
 
-slackInteractions.viewClosed('schedule_modal_callback_id', async (payload) => {
-    console.log('View closed');
+slackInteractions.action({ actionId: 'open_modal' }, async (payload) => {
+    console.log('Opening modal');
+
+    const res = await web.views.open(modalJson(payload.trigger_id, payload.actions[0].value));
 })
 
 slackInteractions.viewSubmission('edit_modal_callback_id', async (payload) => {
@@ -173,14 +175,8 @@ slackInteractions.action({ actionId: 'eventSelect' }, async (payload) => {
     const res = await web.views.update(secondEditEventJson(payload.view.id, selected_event, data));
 })
 
-slackInteractions.action({ actionId: 'open_modal' }, async (payload) => {
-    console.log('Opening modal')
-
-    const res = await web.views.open(modalJson(payload.trigger_id, payload.actions[0].value));
-})
-
 slackInteractions.action({ within: 'block_actions' }, (payload) => {
-    console.log("Default block action called")
+    console.log("Default block action called");
 })
 
 slackInteractions.options({ actionId: 'eventSelect' }, (payload) => {
@@ -306,6 +302,17 @@ async function getEvents(query) {
 
     return options;
 }
+
+app.use(express.urlencoded({ extended: true }));
+
+app.post('/slack/slashcommand', (req, res) => {
+
+    if (authorizedUsers.map(user => user.id).includes(req.body.user_id)) {
+        res.json({ "blocks": homeJsonBlocks() });
+    } else {
+        res.json({ "blocks": unauthorizedHomeJsonBlocks() });
+    }
+})
 
 app.get('/*', (req, res) => {
     res.send("Default get");
