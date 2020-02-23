@@ -15,6 +15,14 @@ let authorizedUsers = [
     {
         "id": "U8ZCZCV6V",
         "name": "Stephanie Almeida"
+    },
+    {
+        "id": "UEGKXTTNC",
+        "name": "Catherine Lee"
+    },
+    {
+        "id": "UEHC7EETC",
+        "name": "saachi wadhwani"
     }
 ]
 
