@@ -307,8 +307,9 @@ async function getEvents(query) {
 app.use(express.urlencoded({ extended: true }));
 
 app.post('/slack/slashcommand', (req, res) => {
-
+    console.log("slackcommand")
     if (authorizedUsers.map(user => user.id).includes(req.body.user_id)) {
+        console.log("sending home bloock")
         res.json({ "blocks": homeJsonBlocks() });
     } else {
         res.json({ "blocks": unauthorizedHomeJsonBlocks() });
