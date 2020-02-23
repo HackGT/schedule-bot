@@ -15,7 +15,6 @@ const { authorizedUsers } = require('./authorizedUsers');
 const web = new WebClient(process.env.SLACK_BOT_TOKEN);
 const slackEvents = createEventAdapter(process.env.SLACK_SIGNING_SECRET);
 const slackInteractions = createMessageAdapter(process.env.SLACK_SIGNING_SECRET);
-
 async function makeRequest(query, variables = {}, token = "") {
     headers = {
         "Content-Type": `application/json`,
@@ -70,10 +69,12 @@ slackEvents.on('message', (event) => {
 
 slackEvents.on('app_home_opened', async (event) => {
     console.log("Setting home");
-
+    console.log(process.env.SLACK_BOT_TOKEN)
     if (authorizedUsers.map(user => user.id).includes(event.user)) {
+        console.log('authorized')
         const res = await web.views.publish(homeJson(event.user));
     } else {
+        console.log('nah')
         const res = await web.views.publish(unauthorizedHomeJson(event.user));
     }
 })
