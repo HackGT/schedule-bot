@@ -1,32 +1,69 @@
 // Lists the ids and names of users who are authorized to access the schedule changer
 let authorizedUsers = [
     {
-        "id": "US8UHEKPB",
+        "id": "UUHRA7A6Q",
         "name": "Ayush Goyal"
     },
     {
-        "id": "UEJDQEH3R",
+        "id": "UUJC2NYHW",
         "name": "Rahul Rajan"
     },
     {
-        "id": "USK5DMHJ4",
+        "id": "UUNKT90JJ",
         "name": "Sahiti Baddula"
     },
     {
-        "id": "U8ZCZCV6V",
-        "name": "Stephanie Almeida"
+        "id": "UU5F3H2QJ",
+        "name": "[staff] Stephanie Almeida"
     },
     {
-        "id": "UEGKXTTNC",
+        "id": "UUJ1ZCJ12",
         "name": "Catherine Lee"
     },
     {
-        "id": "UEHC7EETC",
-        "name": "saachi wadhwani"
+        "id": "UULE735C5",
+        "name": "[staff] Saachi Wadhwani"
     },
     {
-        "id": "UEH97JSMR",
+        "id": "UUHR69MCL",
         "name": "Maria Shapiro"
+    },
+    {
+        "id": "UUKCKQW9K",
+        "name": "Claudia Chu"
+    },
+    {
+        "id": "UUCDJBTDJ",
+        "name": "Evan Strat"
+    },
+    {
+        "id": "UU5F045MG",
+        "name": "Allison Ronan"
+    },
+    {
+        "id": "UUKRW1LBF",
+        "name": "[staff] Mary Xu"
+    },
+    {
+        "id": "UUL716G8P",
+        "name": "Rohith Perumella"
+    },
+    
+    {
+        "id": "UUCSDHXQ8",
+        "name": "Elton Pinto"
+    },
+    {
+        "id": "UUEP5QUS3",
+        "name": "Hannah Kim"
+    },
+    {
+        "id": "UUM2S2FPH",
+        "name": "Anusha Prasad"
+    },
+    {
+        "id": "UUL4J3WSK",
+        "name": "Ohad Rau"
     }
 ]
 
