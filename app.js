@@ -318,6 +318,7 @@ app.post('/slack/slashcommand', (req, res) => {
 
 app.get('/*', (req, res) => {
     res.send("Default get");
+
     console.log('Loading get');
 })
 
